@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PT Pegadaian GIS - Interactive Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .map-bg {
+            background-color: #e2e8f0;
+            background-image: radial-gradient(#94a3b8 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+        }
+        /* Visibility is controlled via inline style="display:..." (see JS below),
+           not via these classes, to avoid Tailwind's CDN stylesheet (which loads
+           after this block) overriding display:none through its .flex utility class. */
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-[#005E38] text-white flex flex-col shrink-0 shadow-xl z-20">
+        <div class="p-4 border-b border-emerald-800/80 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-emerald-500/30 border border-emerald-400/40 flex items-center justify-center font-bold text-white shadow-sm">
+                    <i data-lucide="map-pin" class="w-5 h-5 text-emerald-300"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm leading-tight text-white">PEGADAIAN GIS</h1>
+                    <span class="text-[10px] text-emerald-300 tracking-wider uppercase font-medium">GEO MAPID PLATFORM</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <div class="pt-4 px-3 pb-2 text-[10px] font-bold text-emerald-300 uppercase tracking-wider first:pt-0">Ringkasan</div>
+            <a href="javascript:void(0)" data-page="dashboard" onclick="showPage('dashboard')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer bg-emerald-800 text-white shadow-inner"><i data-lucide="layout-dashboard" class="w-4 h-4 mr-3 text-emerald-300"></i> Dashboard Utama</a>
+            <a href="javascript:void(0)" data-page="rekap" onclick="showPage('rekap')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer text-emerald-100 hover:bg-emerald-800/60"><i data-lucide="bar-chart-3" class="w-4 h-4 mr-3 text-emerald-300"></i> Rekap Jumlah Outlet</a>
+            <div class="pt-4 px-3 pb-2 text-[10px] font-bold text-emerald-300 uppercase tracking-wider first:pt-0">Peta & Lokasi</div>
+            <a href="javascript:void(0)" data-page="peta" onclick="showPage('peta')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer text-emerald-100 hover:bg-emerald-800/60"><i data-lucide="map" class="w-4 h-4 mr-3 text-emerald-300"></i> Peta Persebaran Outlet</a>
+            <div class="pt-4 px-3 pb-2 text-[10px] font-bold text-emerald-300 uppercase tracking-wider first:pt-0">Manajemen Outlet</div>
+            <a href="javascript:void(0)" data-page="pengajuan" onclick="showPage('pengajuan')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer text-emerald-100 hover:bg-emerald-800/60"><i data-lucide="file-text" class="w-4 h-4 mr-3 text-emerald-300"></i> Pengajuan Perubahan</a>
+            <a href="javascript:void(0)" data-page="master" onclick="showPage('master')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer text-emerald-100 hover:bg-emerald-800/60"><i data-lucide="database" class="w-4 h-4 mr-3 text-emerald-300"></i> Master Outlet</a>
+            <a href="javascript:void(0)" data-page="riwayat" onclick="showPage('riwayat')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer text-emerald-100 hover:bg-emerald-800/60"><i data-lucide="history" class="w-4 h-4 mr-3 text-emerald-300"></i> Riwayat Perubahan</a>
+            <a href="javascript:void(0)" data-page="monitoring" onclick="showPage('monitoring')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer text-emerald-100 hover:bg-emerald-800/60"><i data-lucide="check-square" class="w-4 h-4 mr-3 text-emerald-300"></i> Monitoring Approval</a>
+            <div class="pt-4 px-3 pb-2 text-[10px] font-bold text-emerald-300 uppercase tracking-wider first:pt-0">Analisis</div>
+            <a href="javascript:void(0)" data-page="analisis" onclick="showPage('analisis')" class="nav-link flex items-center px-3 py-2.5 text-xs font-medium rounded-lg transition cursor-pointer text-emerald-100 hover:bg-emerald-800/60"><i data-lucide="sparkles" class="w-4 h-4 mr-3 text-emerald-300"></i> Analisis Wilayah</a>
+        </nav>
+
+        <div class="p-3 border-t border-emerald-800/80 bg-emerald-950/40 flex items-center justify-between cursor-pointer hover:bg-emerald-950/70 transition" onclick="showPage('profile')" title="Buka Profil Pengguna">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-xs text-white shadow">
+                    VP
+                </div>
+                <div class="truncate">
+                    <p class="text-xs font-semibold text-emerald-50">Admin Kanwil VIII</p>
+                    <p class="text-[10px] text-emerald-300 truncate">kanwil.jkt1@pegadaian.co.id</p>
+                </div>
+            </div>
+            <button class="text-emerald-300 hover:text-white p-1" onclick="event.stopPropagation();" title="Log Out (mock)">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </aside>
+
+<main id="page-dashboard" class="flex-1 flex flex-col overflow-hidden relative page-view active" style="display:flex;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Dashboard Utama</h2>
+                <p class="text-xs text-slate-500">Ringkasan performa operasional outlet, status akurasi lokasi, dan dinamika jaringan nasional.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- TRIGGER BUTTON 1: BUAT PENGAJUAN BARU -->
+                <button onclick="openModal('dash_newSubmissionModal')" class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition active:scale-95">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> Buat Pengajuan Baru
+                </button>
+                <!-- TRIGGER BUTTON 2: EKSPOR DATA -->
+                <button onclick="openModal('dash_exportDataModal')" class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center border border-slate-300 shadow-sm transition active:scale-95">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5 text-slate-500"></i> Ekspor Data
+                </button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD BODY CONTENT -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- METRIC CARDS OVERVIEW -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Total Outlet Aktif</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1">4,852</h3>
+                        <span class="text-[10px] text-emerald-600 font-semibold">↑ 24 outlet baru bulan ini</span>
+                    </div>
+                    <div class="p-3 bg-slate-100 text-slate-600 rounded-lg">
+                        <i data-lucide="building-2" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-emerald-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-emerald-700">Akurasi Koordinat</p>
+                        <h3 class="text-2xl font-bold text-emerald-900 mt-1">98.2%</h3>
+                        <span class="text-[10px] text-emerald-600 font-medium">4,710 titik tervalidasi</span>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-amber-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-amber-700">Pengajuan Menunggu Action</p>
+                        <h3 class="text-2xl font-bold text-amber-900 mt-1">42</h3>
+                        <span class="text-[10px] text-amber-600 font-medium">Rata-rata SLA: 1.8 Hari</span>
+                    </div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-lg">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-indigo-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-indigo-700">Cakupan POI Spasial</p>
+                        <h3 class="text-2xl font-bold text-indigo-900 mt-1">>2.7 Juta</h3>
+                        <span class="text-[10px] text-indigo-600 font-medium">GEO MAPID Basemap</span>
+                    </div>
+                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN DASHBOARD WIDGETS GRID -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- LEFT WIDGET: STATISTIK VALIDASI -->
+                <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Status Validasi Lokasi Outlet</h3>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded border border-emerald-200 font-medium">Self-Report & Ground Check</span>
+                    </div>
+
+                    <div class="space-y-4 pt-1">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700 flex items-center">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span> Match / GPS Accurate (Ground Check Community)
+                                </span>
+                                <span class="font-bold text-slate-800">3,978 Titik (82%)</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2.5">
+                                <div class="bg-emerald-600 h-2.5 rounded-full" style="width: 82%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700 flex items-center">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span> Need Confirmation (Form Karyawan Cabang)
+                                </span>
+                                <span class="font-bold text-slate-800">582 Titik (12%)</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2.5">
+                                <div class="bg-amber-500 h-2.5 rounded-full" style="width: 12%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700 flex items-center">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-2"></span> Correction Required (Selisih Koordinat > 50m)
+                                </span>
+                                <span class="font-bold text-slate-800">292 Titik (6%)</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2.5">
+                                <div class="bg-rose-500 h-2.5 rounded-full" style="width: 6%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT WIDGET: OPERATIONAL TYPES -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Tipe Operasional Outlet</h3>
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-slate-400"></i>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-emerald-900">Unit Pelayanan Cabang (UPC)</p>
+                                <p class="text-[10px] text-emerald-700">86.3% dari total jaringan</p>
+                            </div>
+                            <span class="text-lg font-bold text-emerald-900">4,190</span>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Cabang Konvensional</p>
+                                <p class="text-[10px] text-slate-500">10.7% dari total jaringan</p>
+                            </div>
+                            <span class="text-lg font-bold text-slate-800">520</span>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Cabang Syariah</p>
+                                <p class="text-[10px] text-slate-500">3.0% dari total jaringan</p>
+                            </div>
+                            <span class="text-lg font-bold text-slate-800">142</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+<main id="page-rekap" class="flex-1 flex flex-col overflow-hidden page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Rekap Jumlah Outlet</h2>
+                <p class="text-xs text-slate-500">Rekapitulasi profesional jumlah titik outlet secara agregat per Wilayah (Kanwil), status operasional, dan jenis outlet.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> Buat Pengajuan Baru
+                </button>
+                <button class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center border border-slate-300 shadow-sm transition">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5 text-slate-500"></i> Ekspor Laporan Excel
+                </button>
+            </div>
+        </header>
+
+        <!-- BODY CONTENT -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- SUMMARY CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Total Outlet Nasional</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1">4,852</h3>
+                        <span class="text-[10px] text-slate-400">12 Kantor Wilayah</span>
+                    </div>
+                    <div class="p-3 bg-slate-100 text-slate-600 rounded-lg">
+                        <i data-lucide="building-2" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-emerald-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-emerald-700">Cabang Konvensional</p>
+                        <h3 class="text-2xl font-bold text-emerald-900 mt-1">520</h3>
+                        <span class="text-[10px] text-emerald-600 font-medium">10.7% total jaringan</span>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <i data-lucide="landmark" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-purple-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-purple-700">Cabang Syariah</p>
+                        <h3 class="text-2xl font-bold text-purple-900 mt-1">142</h3>
+                        <span class="text-[10px] text-purple-600 font-medium">3.0% total jaringan</span>
+                    </div>
+                    <div class="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-blue-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-blue-700">Unit Pelayanan (UPC)</p>
+                        <h3 class="text-2xl font-bold text-blue-900 mt-1">4,190</h3>
+                        <span class="text-[10px] text-blue-600 font-medium">86.3% total jaringan</span>
+                    </div>
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                        <i data-lucide="store" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILTER BAR & TABLE CONTAINER -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
+                
+                <!-- Table Header Controls -->
+                <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50">
+                    <div>
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Rekapitulasi Outlet Per Kantor Wilayah</h3>
+                        <p class="text-[11px] text-slate-500">Rincian data agregat berdasarkan unit kerja dan tipe outlet</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                            <input type="text" placeholder="Cari Kanwil..." class="pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                        </div>
+                        <select class="py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                            <option value="">Status: Semua Operasional</option>
+                            <option value="active">Aktif</option>
+                            <option value="relocating">Proses Relokasi</option>
+                            <option value="temporary_closed">Tutup Sementara</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Main Summary Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-100/80 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3">Kode Kanwil</th>
+                                <th class="px-4 py-3">Kantor Wilayah (Kanwil)</th>
+                                <th class="px-4 py-3 text-center">Cabang Konvensional</th>
+                                <th class="px-4 py-3 text-center">Cabang Syariah</th>
+                                <th class="px-4 py-3 text-center">Unit UPC</th>
+                                <th class="px-4 py-3 text-center">Status Aktif</th>
+                                <th class="px-4 py-3 text-center">Proses Relokasi</th>
+                                <th class="px-4 py-3 text-right font-extrabold text-emerald-800">Total Outlet</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="px-4 py-3 font-mono text-slate-500">KW-01</td>
+                                <td class="px-4 py-3 font-semibold text-slate-900">Kanwil I - Medan</td>
+                                <td class="px-4 py-3 text-center">48</td>
+                                <td class="px-4 py-3 text-center">12</td>
+                                <td class="px-4 py-3 text-center">310</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">368</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">2</span></td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-900">370</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="px-4 py-3 font-mono text-slate-500">KW-02</td>
+                                <td class="px-4 py-3 font-semibold text-slate-900">Kanwil II - Pekanbaru</td>
+                                <td class="px-4 py-3 text-center">35</td>
+                                <td class="px-4 py-3 text-center">10</td>
+                                <td class="px-4 py-3 text-center">280</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">323</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">2</span></td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-900">325</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/80 transition bg-emerald-50/30">
+                                <td class="px-4 py-3 font-mono text-emerald-700 font-bold">KW-08</td>
+                                <td class="px-4 py-3 font-bold text-slate-900 flex items-center">
+                                    Kanwil VIII - Jakarta 1 <span class="ml-2 text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded">Wilayah Anda</span>
+                                </td>
+                                <td class="px-4 py-3 text-center">65</td>
+                                <td class="px-4 py-3 text-center">18</td>
+                                <td class="px-4 py-3 text-center">420</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">498</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">5</span></td>
+                                <td class="px-4 py-3 text-right font-bold text-emerald-900">503</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="px-4 py-3 font-mono text-slate-500">KW-09</td>
+                                <td class="px-4 py-3 font-semibold text-slate-900">Kanwil IX - Jakarta 2</td>
+                                <td class="px-4 py-3 text-center">58</td>
+                                <td class="px-4 py-3 text-center">15</td>
+                                <td class="px-4 py-3 text-center">388</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">458</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">3</span></td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-900">461</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="px-4 py-3 font-mono text-slate-500">KW-10</td>
+                                <td class="px-4 py-3 font-semibold text-slate-900">Kanwil X - Bandung</td>
+                                <td class="px-4 py-3 text-center">52</td>
+                                <td class="px-4 py-3 text-center">14</td>
+                                <td class="px-4 py-3 text-center">395</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">457</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">4</span></td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-900">461</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="px-4 py-3 font-mono text-slate-500">KW-11</td>
+                                <td class="px-4 py-3 font-semibold text-slate-900">Kanwil XI - Semarang</td>
+                                <td class="px-4 py-3 text-center">60</td>
+                                <td class="px-4 py-3 text-center">16</td>
+                                <td class="px-4 py-3 text-center">410</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">483</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">3</span></td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-900">486</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-200">
+                            <tr>
+                                <td class="px-4 py-3" colspan="2">TOTAL NASIONAL (12 KANWIL)</td>
+                                <td class="px-4 py-3 text-center">520</td>
+                                <td class="px-4 py-3 text-center">142</td>
+                                <td class="px-4 py-3 text-center">4,190</td>
+                                <td class="px-4 py-3 text-center text-emerald-700">4,828</td>
+                                <td class="px-4 py-3 text-center text-amber-700">24</td>
+                                <td class="px-4 py-3 text-right text-emerald-800 font-extrabold text-sm">4,852</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Footer Pagination & Meta -->
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                    <div>Menampilkan 6 dari 12 Kantor Wilayah</div>
+                    <div class="flex items-center space-x-1">
+                        <button class="px-2.5 py-1 bg-white border border-slate-200 rounded disabled:opacity-50">Prev</button>
+                        <button class="px-2.5 py-1 bg-[#005E38] text-white rounded font-medium">1</button>
+                        <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">2</button>
+                        <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">Next</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+<main id="page-peta" class="flex-1 flex flex-col overflow-hidden relative page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Peta Persebaran Outlet</h2>
+                <p class="text-xs text-slate-500">Eksplorasi spasial lokasi outlet nasional terintegrasi dengan GEO MAPID basemap & validasi lokasi.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> Buat Pengajuan Baru
+                </button>
+                <button class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center border border-slate-300 shadow-sm transition">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5 text-slate-500"></i> Ekspor Data
+                </button>
+            </div>
+        </header>
+
+        <!-- FULLSCREEN GIS MAP CONTAINER -->
+        <div class="flex-1 map-bg relative overflow-hidden flex items-center justify-center">
+
+            <!-- SIMULATED GIS MAP ELEMENTS -->
+            <div class="absolute inset-0 opacity-30 bg-[radial-gradient(#005E38_1px,transparent_1px)] [background-size:16px_16px]"></div>
+
+            <!-- PIN 1 (SELECTED WITH CLICK POPUP) -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center cursor-pointer">
+                <!-- Click Popup Card (FR-P2-08) -->
+                <div class="bg-white rounded-xl shadow-2xl border border-slate-200 p-3.5 mb-2 w-64 text-xs space-y-2 animate-fade-in">
+                    <div class="flex items-center justify-between border-b pb-1.5 border-slate-100">
+                        <span class="font-bold text-slate-800">Unit CP Kramat Raya</span>
+                        <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Tervalidasi</span>
+                    </div>
+                    <div class="space-y-1 text-[11px] text-slate-600">
+                        <p><span class="text-slate-400">Kode:</span> <span class="font-mono font-medium">PGD-JKT-042</span></p>
+                        <p><span class="text-slate-400">Alamat:</span> Jl. Kramat Raya No. 12, Senen</p>
+                        <p><span class="text-slate-400">Koordinat:</span> -6.18234, 106.83211</p>
+                        <p><span class="text-slate-400">Metode Validasi:</span> Ground Check Community</p>
+                    </div>
+                    <div class="pt-1 border-t border-slate-100 flex justify-between items-center text-[10px]">
+                        <span class="text-emerald-700 font-semibold">Skor Akurasi: 98.4%</span>
+                        <a href="#" class="text-blue-600 hover:underline font-medium">Lihat Detail →</a>
+                    </div>
+                </div>
+
+                <!-- Main Pin Marker -->
+                <div class="w-10 h-10 bg-[#005E38] text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce">
+                    <i data-lucide="building-2" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- SECONDARY PINS ON MAP -->
+            <div class="absolute top-1/3 left-1/3 text-amber-600 bg-white p-1.5 rounded-full shadow-md border border-amber-200">
+                <i data-lucide="map-pin" class="w-5 h-5"></i>
+            </div>
+            <div class="absolute bottom-1/3 right-1/3 text-emerald-700 bg-white p-1.5 rounded-full shadow-md border border-emerald-200">
+                <i data-lucide="map-pin" class="w-5 h-5"></i>
+            </div>
+            <div class="absolute top-1/4 right-1/4 text-purple-700 bg-white p-1.5 rounded-full shadow-md border border-purple-200">
+                <i data-lucide="map-pin" class="w-5 h-5"></i>
+            </div>
+
+            <!-- FLOATING CONTROL PANEL: HIERARCHY FILTER (FR-P2-10) -->
+            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-xl border border-slate-200 space-y-3 w-80 z-10">
+                <div class="flex items-center justify-between border-b pb-2 border-slate-100">
+                    <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wide flex items-center">
+                        <i data-lucide="filter" class="w-3.5 h-3.5 text-emerald-700 mr-1.5"></i> Filter Hirarki Organisasi
+                    </h3>
+                    <span class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">Pillar 2</span>
+                </div>
+
+                <div class="space-y-2 text-xs">
+                    <div>
+                        <label class="text-[10px] text-slate-500 font-semibold block mb-1">Kantor Wilayah (Kanwil)</label>
+                        <select class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-medium text-slate-800">
+                            <option value="kw8">Kanwil VIII - Jakarta 1</option>
+                            <option value="kw9">Kanwil IX - Jakarta 2</option>
+                            <option value="kw10">Kanwil X - Bandung</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-slate-500 font-semibold block mb-1">Induk Kantor Cabang</label>
+                        <select class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-medium text-slate-800">
+                            <option value="">Semua Kantor Cabang (24 Cabang)</option>
+                            <option value="c-kramat" selected>Cabang Kramat Raya</option>
+                            <option value="c-senen">Cabang Senen</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-slate-500 font-semibold block mb-1">Tipe Unit / Outlet</label>
+                        <div class="grid grid-cols-2 gap-2 pt-0.5">
+                            <label class="flex items-center space-x-1.5 text-[11px] p-1.5 bg-slate-50 rounded border border-slate-200">
+                                <input type="checkbox" checked class="rounded text-emerald-600">
+                                <span>Konvensional</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 text-[11px] p-1.5 bg-slate-50 rounded border border-slate-200">
+                                <input type="checkbox" checked class="rounded text-emerald-600">
+                                <span>Syariah</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FLOATING CONTROL PANEL: DISTANCE MEASUREMENT TOOL (FR-P2-11) -->
+            <div class="absolute top-4 right-4 bg-white/95 backdrop-blur-md p-3 rounded-xl shadow-xl border border-slate-200 space-y-2 z-10 w-64">
+                <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wide flex items-center">
+                    <i data-lucide="ruler" class="w-3.5 h-3.5 text-emerald-700 mr-1.5"></i> Alat Ukur Jarak Outlet
+                </h3>
+                <p class="text-[10px] text-slate-500">Klik dua atau lebih titik outlet di peta untuk menghitung jarak langsung.</p>
+                <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-200 flex justify-between items-center text-xs">
+                    <span class="text-emerald-900 font-medium">Jarak Terukur:</span>
+                    <span class="font-bold text-emerald-800 font-mono">1.45 km</span>
+                </div>
+                <button class="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs transition">
+                    Reset Pengukuran
+                </button>
+            </div>
+
+            <!-- MAP LAYER & ZOOM NAVIGATION -->
+            <div class="absolute bottom-6 right-6 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-200 p-1.5 flex flex-col space-y-1 z-10">
+                <button class="p-2 hover:bg-slate-100 rounded-lg text-slate-700" title="Zoom In"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                <button class="p-2 hover:bg-slate-100 rounded-lg text-slate-700" title="Zoom Out"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                <button class="p-2 hover:bg-slate-100 rounded-lg text-slate-700 border-t border-slate-100" title="Ganti Basemap"><i data-lucide="layers" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- BASEMAP SCALE FOOTER -->
+            <div class="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] text-slate-600 font-mono z-10 shadow-sm flex items-center space-x-3">
+                <span>GEO MAPID Basemap v4.0</span>
+                <span>•</span>
+                <span>Skala: 1:10.000</span>
+            </div>
+
+        </div>
+    </main>
+<main id="page-pengajuan" class="flex-1 flex flex-col overflow-hidden page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Pengajuan Perubahan Data Outlet</h2>
+                <p class="text-xs text-slate-500">Kelola dan tinjau pengajuan pembukaan, relokasi, dan penutupan titik outlet.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="openModal('peng_newSubmissionModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> Buat Pengajuan Baru
+                </button>
+                <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-2 rounded-lg flex items-center border border-slate-300 transition">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5"></i> Ekspor Data
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT BODY -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- METRIC CARDS (AGGREGATE STATUS) -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Total Pengajuan</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1">1,248</h3>
+                        <span class="text-[10px] text-slate-400">Tahun 2026</span>
+                    </div>
+                    <div class="p-3 bg-slate-100 text-slate-600 rounded-lg">
+                        <i data-lucide="files" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-amber-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-amber-700">Menunggu Review</p>
+                        <h3 class="text-2xl font-bold text-amber-900 mt-1">42</h3>
+                        <span class="text-[10px] text-amber-600 font-medium">Membutuhkan tindakan</span>
+                    </div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-lg">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-blue-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-blue-700">Dalam Perbaikan</p>
+                        <h3 class="text-2xl font-bold text-blue-900 mt-1">15</h3>
+                        <span class="text-[10px] text-blue-600">Revisi cabang</span>
+                    </div>
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-emerald-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-emerald-700">Disetujui</p>
+                        <h3 class="text-2xl font-bold text-emerald-900 mt-1">1,120</h3>
+                        <span class="text-[10px] text-emerald-600">Tersinkronisasi GEO MAPID</span>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-rose-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-rose-700">Ditolak</p>
+                        <h3 class="text-2xl font-bold text-rose-900 mt-1">71</h3>
+                        <span class="text-[10px] text-rose-600">Tidak memenuhi kriteria</span>
+                    </div>
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-lg">
+                        <i data-lucide="x-circle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE CONTENT GRID (FILTERS, MAP SIDE-PREVIEW & TABLE) -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+                <!-- MAIN TABLE AREA (3 COLUMNS) -->
+                <div class="lg:col-span-3 space-y-4">
+                    
+                    <!-- TAB NAVIGATION & FILTERS BAR -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+                        <!-- Status Tabs -->
+                        <div class="flex border-b border-slate-200 space-x-6 text-xs font-medium">
+                            <button class="pb-3 text-emerald-600 border-b-2 border-emerald-600 font-semibold flex items-center">
+                                Semua Pengajuan <span class="ml-2 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px]">1,248</span>
+                            </button>
+                            <button class="pb-3 text-slate-500 hover:text-slate-800 flex items-center">
+                                Menunggu Review <span class="ml-2 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px]">42</span>
+                            </button>
+                            <button class="pb-3 text-slate-500 hover:text-slate-800 flex items-center">
+                                Perbaikan / Revisi <span class="ml-2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[10px]">15</span>
+                            </button>
+                            <button class="pb-3 text-slate-500 hover:text-slate-800 flex items-center">
+                                Disetujui
+                            </button>
+                            <button class="pb-3 text-slate-500 hover:text-slate-800 flex items-center">
+                                Ditolak
+                            </button>
+                        </div>
+
+                        <!-- Search and Dropdown Filters -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-1">
+                            <!-- Search Input -->
+                            <div class="relative md:col-span-1">
+                                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                                <input type="text" placeholder="Cari Kode/Nama Outlet / ID..." class="pl-9 pr-3 py-1.5 w-full bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
+                            </div>
+                            
+                            <!-- Hierarchy Filter: Kanwil -->
+                            <div>
+                                <select class="w-full py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                                    <option value="">Semua Kanwil (Wilayah)</option>
+                                    <option value="kanwil8" selected>Kanwil VIII - Jakarta 1</option>
+                                    <option value="kanwil9">Kanwil IX - Jakarta 2</option>
+                                    <option value="kanwil10">Kanwil X - Bandung</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter: Jenis Perubahan -->
+                            <div>
+                                <select class="w-full py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                                    <option value="">Semua Jenis Perubahan</option>
+                                    <option value="relocation">Relokasi Outlet</option>
+                                    <option value="new">Buka Baru</option>
+                                    <option value="address">Perubahan Alamat</option>
+                                    <option value="closure">Tutup Outlet</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter: Status Validasi GIS -->
+                            <div>
+                                <select class="w-full py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                                    <option value="">Status Validasi GIS</option>
+                                    <option value="match">Match (Terverifikasi)</option>
+                                    <option value="correction">Correction Required</option>
+                                    <option value="confirm">Need Confirmation</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DATA TABLE -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-600">
+                                <thead class="bg-slate-50 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-4 py-3">No. Pengajuan</th>
+                                        <th class="px-4 py-3">Nama & Kode Outlet</th>
+                                        <th class="px-4 py-3">Jenis Perubahan</th>
+                                        <th class="px-4 py-3">Wilayah / Kanwil</th>
+                                        <th class="px-4 py-3">Status Validasi GIS</th>
+                                        <th class="px-4 py-3">Status Approval</th>
+                                        <th class="px-4 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <!-- Row 1 -->
+                                    <tr class="hover:bg-slate-50/80 transition cursor-pointer" onclick="openModal('peng_detailModal')">
+                                        <td class="px-4 py-3 font-semibold text-emerald-700">MO-2026-00125</td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-slate-900">Unit CP Kramat Raya</div>
+                                            <div class="text-[10px] text-slate-400">Kode: PGD-JKT-042</div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                                Relokasi
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">Kanwil VIII Jakarta 1</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center text-[10px] text-emerald-700 font-medium">
+                                                <i data-lucide="check-circle" class="w-3 h-3 mr-1 text-emerald-500"></i> Match (GPS Accurate)
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">
+                                                Menunggu Review
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button onclick="event.stopPropagation(); openModal('peng_detailModal')" class="text-xs bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 px-2.5 py-1 rounded font-medium transition">
+                                                Tinjau
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Row 2 -->
+                                    <tr class="hover:bg-slate-50/80 transition cursor-pointer" onclick="openModal('peng_detailModal')">
+                                        <td class="px-4 py-3 font-semibold text-emerald-700">MO-2026-00124</td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-slate-900">Cabang Senen Syariah</div>
+                                            <div class="text-[10px] text-slate-400">Kode: PGD-SYR-011</div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                                Buka Baru
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">Kanwil VIII Jakarta 1</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center text-[10px] text-amber-700 font-medium">
+                                                <i data-lucide="alert-triangle" class="w-3 h-3 mr-1 text-amber-500"></i> Need Confirmation
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">
+                                                Review / Revisi
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button onclick="event.stopPropagation(); openModal('peng_detailModal')" class="text-xs bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 px-2.5 py-1 rounded font-medium transition">
+                                                Tinjau
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Row 3 -->
+                                    <tr class="hover:bg-slate-50/80 transition">
+                                        <td class="px-4 py-3 font-semibold text-emerald-700">MO-2026-00120</td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-slate-900">Unit UPC Cempaka Putih</div>
+                                            <div class="text-[10px] text-slate-400">Kode: PGD-JKT-088</div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                                Perubahan Alamat
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">Kanwil VIII Jakarta 1</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center text-[10px] text-emerald-700 font-medium">
+                                                <i data-lucide="check-circle" class="w-3 h-3 mr-1 text-emerald-500"></i> Match
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                                                Disetujui
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button class="text-xs bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 rounded font-medium">
+                                                Detail
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- PAGINATION FOOTER -->
+                        <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                            <div>Menampilkan 1 - 3 dari 1,248 data</div>
+                            <div class="flex items-center space-x-1">
+                                <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100 disabled:opacity-50">Prev</button>
+                                <button class="px-2.5 py-1 bg-emerald-600 text-white rounded">1</button>
+                                <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">2</button>
+                                <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">3</button>
+                                <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIDE MAP PREVIEW (1 COLUMN) -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col h-[520px]">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-xs text-slate-800 flex items-center">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 mr-1.5"></i> Preview Lokasi Outlet (Pillar 1)
+                        </h3>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">GEO MAPID</span>
+                    </div>
+
+                    <!-- SIMULATED GIS MAP -->
+                    <div class="flex-1 map-bg rounded-lg my-3 border border-slate-200 relative overflow-hidden flex items-center justify-center">
+                        <!-- Simulated Map Elements -->
+                        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:12px_12px]"></div>
+
+                        <!-- Map Pin Center -->
+                        <div class="relative z-10 flex flex-col items-center">
+                            <div class="bg-emerald-600 text-white p-2 rounded-full shadow-lg animate-bounce">
+                                <i data-lucide="building-2" class="w-5 h-5"></i>
+                            </div>
+                            <div class="bg-slate-900/90 text-white text-[10px] px-2 py-1 rounded shadow mt-1 whitespace-nowrap">
+                                Unit CP Kramat Raya (-6.1823, 106.8321)
+                            </div>
+                        </div>
+
+                        <!-- Secondary Pins -->
+                        <div class="absolute top-12 left-10 text-amber-600">
+                            <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        </div>
+                        <div class="absolute bottom-16 right-12 text-emerald-600">
+                            <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        </div>
+
+                        <!-- Map Overlay Controls -->
+                        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded border border-slate-200 p-1 shadow flex flex-col space-y-1">
+                            <button class="p-1 hover:bg-slate-100 rounded text-slate-700"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+                            <button class="p-1 hover:bg-slate-100 rounded text-slate-700"><i data-lucide="minus" class="w-3.5 h-3.5"></i></button>
+                            <button class="p-1 hover:bg-slate-100 rounded text-slate-700"><i data-lucide="layers" class="w-3.5 h-3.5"></i></button>
+                        </div>
+
+                        <div class="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded border border-slate-200 text-[9px] text-slate-600 font-mono">
+                            Radius Kanibalisasi: 500m
+                        </div>
+                    </div>
+
+                    <!-- Selected Point Quick Metadata -->
+                    <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200 text-xs space-y-1.5">
+                        <div class="flex justify-between text-[11px]">
+                            <span class="text-slate-500">Hasil Validasi:</span>
+                            <span class="font-semibold text-emerald-700">Ground Check Community</span>
+                        </div>
+                        <div class="flex justify-between text-[11px]">
+                            <span class="text-slate-500">Skor Akurasi:</span>
+                            <span class="font-semibold text-slate-800">98.4% (Best Record)</span>
+                        </div>
+                        <div class="flex justify-between text-[11px]">
+                            <span class="text-slate-500">Alamat Valid:</span>
+                            <span class="font-medium text-slate-700 truncate max-w-[140px]">Jl. Kramat Raya No.12</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+<main id="page-master" class="flex-1 flex flex-col overflow-hidden page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Master Outlet</h2>
+                <p class="text-xs text-slate-500">Direktori terpusat sebagai single source of truth data outlet tervalidasi di seluruh Indonesia.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> Buat Pengajuan Baru
+                </button>
+                <button class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center border border-slate-300 shadow-sm transition">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5 text-slate-500"></i> Ekspor Master Data
+                </button>
+            </div>
+        </header>
+
+        <!-- BODY CONTENT -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- SUMMARY STATS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Total Master Records</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1">4,852</h3>
+                        <span class="text-[10px] text-slate-400">Tersinkronisasi SAP</span>
+                    </div>
+                    <div class="p-3 bg-slate-100 text-slate-600 rounded-lg">
+                        <i data-lucide="database" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-emerald-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-emerald-700">Tervalidasi Match</p>
+                        <h3 class="text-2xl font-bold text-emerald-900 mt-1">3,978</h3>
+                        <span class="text-[10px] text-emerald-600 font-medium">GPS Presisi High</span>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-amber-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-amber-700">Need Confirmation</p>
+                        <h3 class="text-2xl font-bold text-amber-900 mt-1">582</h3>
+                        <span class="text-[10px] text-amber-600 font-medium">Self-Report Verification</span>
+                    </div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-lg">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border-l-4 border-rose-500 border-y border-r border-slate-200 p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-rose-700">Correction Required</p>
+                        <h3 class="text-2xl font-bold text-rose-900 mt-1">292</h3>
+                        <span class="text-[10px] text-rose-600 font-medium">Perlu pemutakhiran</span>
+                    </div>
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-lg">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH & DIRECTORY TABLE -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
+                
+                <!-- Search Controls -->
+                <div class="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="relative flex-1 max-w-md">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" placeholder="Cari berdasarkan Kode Outlet, Nama, atau Alamat..." class="pl-9 pr-3 py-1.5 w-full bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <select class="py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                            <option value="">Semua Wilayah (Kanwil)</option>
+                            <option value="kw8" selected>Kanwil VIII - Jakarta 1</option>
+                            <option value="kw9">Kanwil IX - Jakarta 2</option>
+                        </select>
+
+                        <select class="py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                            <option value="">Tipe Outlet: Semua</option>
+                            <option value="upc">UPC (Unit)</option>
+                            <option value="konvensional">Cabang Konvensional</option>
+                            <option value="syariah">Cabang Syariah</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Directory Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-100/80 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3">Kode Outlet</th>
+                                <th class="px-4 py-3">Nama Outlet / Unit</th>
+                                <th class="px-4 py-3">Tipe</th>
+                                <th class="px-4 py-3">Kantor Wilayah</th>
+                                <th class="px-4 py-3">Koordinat Valid</th>
+                                <th class="px-4 py-3">Status Validasi GIS</th>
+                                <th class="px-4 py-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-4 py-3 font-mono font-bold text-emerald-700">PGD-JKT-042</td>
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-slate-900">Unit CP Kramat Raya</div>
+                                    <div class="text-[10px] text-slate-400">Jl. Kramat Raya No. 12, Senen</div>
+                                </td>
+                                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border">UPC</span></td>
+                                <td class="px-4 py-3">Kanwil VIII Jakarta 1</td>
+                                <td class="px-4 py-3 font-mono text-[11px] text-slate-600">-6.18234, 106.83211</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                                        ✓ Match (GPS Accurate)
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded font-medium transition">
+                                        Detail
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-4 py-3 font-mono font-bold text-emerald-700">PGD-SYR-011</td>
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-slate-900">Cabang Senen Syariah</div>
+                                    <div class="text-[10px] text-slate-400">Jl. Stasiun Senen No. 8, Senen</div>
+                                </td>
+                                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">Syariah</span></td>
+                                <td class="px-4 py-3">Kanwil VIII Jakarta 1</td>
+                                <td class="px-4 py-3 font-mono text-[11px] text-slate-600">-6.17821, 106.84102</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">
+                                         Need Confirmation
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded font-medium transition">
+                                        Detail
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-4 py-3 font-mono font-bold text-emerald-700">PGD-JKT-088</td>
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-slate-900">Unit UPC Cempaka Putih</div>
+                                    <div class="text-[10px] text-slate-400">Jl. Cempaka Putih Raya No. 101</div>
+                                </td>
+                                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border">UPC</span></td>
+                                <td class="px-4 py-3">Kanwil VIII Jakarta 1</td>
+                                <td class="px-4 py-3 font-mono text-[11px] text-slate-600">-6.18002, 106.86540</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                                        ✓ Match (GPS Accurate)
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded font-medium transition">
+                                        Detail
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Footer -->
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                    <div>Menampilkan 1 - 3 dari 4,852 master records</div>
+                    <div class="flex items-center space-x-1">
+                        <button class="px-2.5 py-1 bg-white border border-slate-200 rounded disabled:opacity-50">Prev</button>
+                        <button class="px-2.5 py-1 bg-[#005E38] text-white rounded font-medium">1</button>
+                        <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">2</button>
+                        <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">3</button>
+                        <button class="px-2.5 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">Next</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+<main id="page-riwayat" class="flex-1 flex flex-col overflow-hidden page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Riwayat Perubahan (Audit Log)</h2>
+                <p class="text-xs text-slate-500">Log historis terverifikasi seluruh aktivitas pengajuan, persetujuan, dan perubahan data per outlet.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> Buat Pengajuan Baru
+                </button>
+                <button class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center border border-slate-300 shadow-sm transition">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5 text-slate-500"></i> Ekspor Log Audit
+                </button>
+            </div>
+        </header>
+
+        <!-- BODY CONTENT -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- FILTER BAR -->
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="relative flex-1 max-w-md">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                    <input type="text" placeholder="Cari No. Pengajuan (MO-2026-XXXXX) / Outlet..." class="pl-9 pr-3 py-1.5 w-full bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select class="py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                        <option>Semua Jenis Perubahan</option>
+                        <option>Relokasi</option>
+                        <option>Buka Baru</option>
+                        <option>Perubahan Alamat</option>
+                    </select>
+                    <input type="date" class="py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                </div>
+            </div>
+
+            <!-- TIMELINE AUDIT LOG LIST -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-6">
+                <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3">Aktivitas Historis Terbaru</h3>
+
+                <div class="space-y-6 relative pl-6 border-l-2 border-slate-200 text-xs">
+                    
+                    <!-- Item 1 -->
+                    <div class="relative">
+                        <div class="w-3.5 h-3.5 bg-emerald-600 rounded-full absolute -left-[31px] top-0.5 border-2 border-white shadow-sm"></div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-emerald-800">MO-2026-00120</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">DISUJUI & SINKRON SAP</span>
+                            <span class="text-[10px] text-slate-400">08 Agustus 2026 • 14:22 WIB</span>
+                        </div>
+                        <p class="font-bold text-slate-800 mt-1">Perubahan Alamat — Unit UPC Cempaka Putih (PGD-JKT-088)</p>
+                        <p class="text-slate-600 mt-0.5">Disetujui oleh <span class="font-medium">Direksi / Divisi Jaringan Pusat</span>. Koordinat baru terverifikasi: -6.18002, 106.86540.</p>
+                        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 mt-2 text-[11px] font-mono text-slate-600">
+                            System Log: [SAP_SYNC_SUCCESS] Payload accepted by SAP Core Banking API (HTTP 200 OK).
+                        </div>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="relative">
+                        <div class="w-3.5 h-3.5 bg-amber-500 rounded-full absolute -left-[31px] top-0.5 border-2 border-white shadow-sm"></div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-slate-800">MO-2026-00125</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">MENUNGGU REVIEW</span>
+                            <span class="text-[10px] text-slate-400">10 Agustus 2026 • 09:15 WIB</span>
+                        </div>
+                        <p class="font-bold text-slate-800 mt-1">Pengajuan Relokasi — Unit CP Kramat Raya (PGD-JKT-042)</p>
+                        <p class="text-slate-600 mt-0.5">Dibuat oleh <span class="font-medium">Budi Santoso (Admin Cabang Senen)</span>. Menunggu review Pemimpin Wilayah (Kanwil VIII).</p>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div class="relative">
+                        <div class="w-3.5 h-3.5 bg-blue-500 rounded-full absolute -left-[31px] top-0.5 border-2 border-white shadow-sm"></div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-slate-800">MO-2026-00124</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800">MEMBUTUHKAN REVISI</span>
+                            <span class="text-[10px] text-slate-400">09 Agustus 2026 • 16:40 WIB</span>
+                        </div>
+                        <p class="font-bold text-slate-800 mt-1">Pengajuan Buka Baru — Cabang Senen Syariah (PGD-SYR-011)</p>
+                        <p class="text-slate-600 mt-0.5">Dikembalikan oleh <span class="font-medium">VP Kanwil VIII</span> dengan catatan: "Mohon lengkapi foto survei tampak depan gedung lokasi baru."</p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+<main id="page-monitoring" class="flex-1 flex flex-col overflow-hidden page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Monitoring Approval</h2>
+                <p class="text-xs text-slate-500">Pemantauan progres persetujuan berjenjang dan performa kepatuhan SLA antar-unit kerja.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> Buat Pengajuan Baru
+                </button>
+                <button class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center border border-slate-300 shadow-sm transition">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5 text-slate-500"></i> Ekspor Laporan SLA
+                </button>
+            </div>
+        </header>
+
+        <!-- BODY CONTENT -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- PIPELINE STAGES CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Stage 1 -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Tahap 1: Review Kanwil</span>
+                        <span class="text-xs font-bold text-slate-800">42 Pending</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Pemimpin Wilayah</h3>
+                    <div class="space-y-1 text-xs text-slate-500">
+                        <div class="flex justify-between"><span>Rata-rata Durasi:</span> <span class="font-bold text-slate-700">1.2 Hari</span></div>
+                        <div class="flex justify-between"><span>Target SLA:</span> <span class="font-medium text-emerald-700">Maks. 3 Hari</span></div>
+                        <div class="flex justify-between"><span>SLA Compliance:</span> <span class="font-bold text-emerald-600">96.4%</span></div>
+                    </div>
+                </div>
+
+                <!-- Stage 2 -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Tahap 2: Divisi Jaringan</span>
+                        <span class="text-xs font-bold text-slate-800">8 Pending</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Kantor Pusat (Pusat)</h3>
+                    <div class="space-y-1 text-xs text-slate-500">
+                        <div class="flex justify-between"><span>Rata-rata Durasi:</span> <span class="font-bold text-slate-700">0.8 Hari</span></div>
+                        <div class="flex justify-between"><span>Target SLA:</span> <span class="font-medium text-emerald-700">Maks. 2 Hari</span></div>
+                        <div class="flex justify-between"><span>SLA Compliance:</span> <span class="font-bold text-emerald-600">98.8%</span></div>
+                    </div>
+                </div>
+
+                <!-- Stage 3 -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Tahap 3: Final Sync</span>
+                        <span class="text-xs font-bold text-slate-800">1,120 Selesai</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Sinkronisasi SAP</h3>
+                    <div class="space-y-1 text-xs text-slate-500">
+                        <div class="flex justify-between"><span>Status Master:</span> <span class="font-bold text-emerald-700">Single Source of Truth</span></div>
+                        <div class="flex justify-between"><span>Auto-Sync SAP:</span> <span class="font-medium text-emerald-700">Aktif</span></div>
+                        <div class="flex justify-between"><span>Success Rate:</span> <span class="font-bold text-emerald-600">100%</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ACTION REQUIRED TABLE -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
+                
+                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Daftar Pengajuan Butuh Tindakan (Pending Approval)</h3>
+                        <p class="text-[11px] text-slate-500">Diurutkan berdasarkan sisa waktu batas SLA</p>
+                    </div>
+                    <select class="py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none">
+                        <option>Urutkan: SLA Terdekat</option>
+                        <option>SLA Terlama</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-100/80 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3">No. Pengajuan</th>
+                                <th class="px-4 py-3">Nama Outlet / Unit</th>
+                                <th class="px-4 py-3">Jenis Perubahan</th>
+                                <th class="px-4 py-3">Approver Aktif</th>
+                                <th class="px-4 py-3">Waktu Berjalan</th>
+                                <th class="px-4 py-3">Status SLA</th>
+                                <th class="px-4 py-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-4 py-3 font-semibold text-emerald-700">MO-2026-00125</td>
+                                <td class="px-4 py-3 font-medium text-slate-900">Unit CP Kramat Raya (PGD-JKT-042)</td>
+                                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">Relokasi</span></td>
+                                <td class="px-4 py-3">Pemimpin Wilayah VIII</td>
+                                <td class="px-4 py-3 font-mono text-slate-600">1 Hari 4 Jam</td>
+                                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">✓ On-Track (SLA 3d)</span></td>
+                                <td class="px-4 py-3 text-right">
+                                    <button class="px-3 py-1 bg-[#005E38] text-white rounded font-medium shadow-sm hover:bg-emerald-800 transition">Proses Now</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-4 py-3 font-semibold text-emerald-700">MO-2026-00118</td>
+                                <td class="px-4 py-3 font-medium text-slate-900">Cabang Kebayoran Lama (PGD-JKT-019)</td>
+                                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">Buka Baru</span></td>
+                                <td class="px-4 py-3">Divisi Jaringan Pusat</td>
+                                <td class="px-4 py-3 font-mono text-slate-600">2 Hari 22 Jam</td>
+                                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-800">⚠️ Mendekati Deadline</span></td>
+                                <td class="px-4 py-3 text-right">
+                                    <button class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border rounded font-medium transition">Ingatkan Approver</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                    <div>Menampilkan 2 dari 50 pengajuan pending</div>
+                    <div class="flex items-center space-x-1">
+                        <button class="px-2.5 py-1 bg-white border rounded disabled:opacity-50">Prev</button>
+                        <button class="px-2.5 py-1 bg-[#005E38] text-white rounded font-medium">1</button>
+                        <button class="px-2.5 py-1 bg-white border rounded hover:bg-slate-100">Next</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+<main id="page-analisis" class="flex-1 flex flex-col overflow-hidden page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div class="flex items-center space-x-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Analisis Potensi Wilayah</h2>
+                    <p class="text-xs text-slate-500">Site Selection berbasis MCDA (POI + Demografi), analisis kanibalisasi, dan Asisten AI Spasial.</p>
+                </div>
+                <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-purple-200">
+                    ✨ Extension Suite
+                </span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="play" class="w-4 h-4 mr-1.5"></i> Jalankan MCDA Batch
+                </button>
+                <button class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center border border-slate-300 shadow-sm transition">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5 text-slate-500"></i> Ekspor Laporan Spasial
+                </button>
+            </div>
+        </header>
+
+        <!-- BODY CONTENT -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- TOP MCDA & PARAMETERS WIDGETS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- AI CHAT COPILOT DRAWER -->
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col h-[460px]">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-xs text-slate-800 flex items-center">
+                            <i data-lucide="bot" class="w-4 h-4 text-purple-600 mr-1.5"></i> Asisten AI Spasial (Semi-Agentic)
+                        </h3>
+                        <span class="text-[9px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded font-mono">GPT Engine</span>
+                    </div>
+
+                    <!-- Chat Messages Area -->
+                    <div class="flex-1 bg-slate-50 rounded-lg p-3 my-3 text-xs overflow-y-auto space-y-3 border border-slate-100">
+                        <!-- User Msg -->
+                        <div class="bg-emerald-50 text-emerald-900 p-2.5 rounded-lg border border-emerald-200/60 ml-4">
+                            <p class="font-semibold text-[10px] text-emerald-700">Anda:</p>
+                            <p class="mt-0.5">"Berikan rekomendasi Site Selection relokasi untuk Unit CP Kramat Raya di radius 500m."</p>
+                        </div>
+
+                        <!-- AI Msg -->
+                        <div class="bg-white text-slate-700 p-2.5 rounded-lg border border-slate-200 shadow-sm mr-4 space-y-1.5">
+                            <p class="font-semibold text-[10px] text-purple-800 flex items-center">
+                                <i data-lucide="sparkles" class="w-3 h-3 mr-1"></i> GEO MAPID AI:
+                            </p>
+                            <p class="text-[11px] leading-relaxed">
+                                Berdasarkan evaluasi 4-parameter pada radius 500m di Kelurahan Kramat:
+                            </p>
+                            <ul class="list-disc pl-4 text-[10px] text-slate-600 space-y-1">
+                                <li><strong>SES/SCS Score:</strong> High Potential (Populasi SES A/B 64%)</li>
+                                <li><strong>Kanibalisasi:</strong> Rendah (Jarak ke outlet terdekat > 1.2km)</li>
+                                <li><strong>POI Density:</strong> > 140 titik komersial/pasar</li>
+                            </ul>
+                            <div class="pt-1 text-[10px] font-bold text-emerald-700">
+                                Skor Kelayakan MCDA: 88.4 / 100 (Rekomendasi: Sangat Layak)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="flex space-x-2">
+                        <input type="text" placeholder="Tanyakan analisis lokasi atau kompetitor..." class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-purple-500">
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-xs font-semibold shadow">Kirim</button>
+                    </div>
+                </div>
+
+                <!-- 4-PARAMETER ANALYTICS & MCDA CONTROLS -->
+                <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center border-b pb-3 border-slate-100">
+                            <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Konfigurasi Parameter MCDA & Site Selection</h3>
+                            <span class="text-xs text-slate-500">Radius Acuan: <strong>500m (Kelurahan/Desa)</strong></span>
+                        </div>
+
+                        <!-- 4 Parameters Grid -->
+                        <div class="grid grid-cols-2 gap-4 pt-4">
+                            
+                            <!-- Param 1: Isochrone -->
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-800 flex items-center">
+                                        <i data-lucide="clock" class="w-3.5 h-3.5 text-emerald-700 mr-1.5"></i> 1. Isokron Jangkauan
+                                    </span>
+                                    <span class="text-[10px] font-mono text-slate-500">5 Mins Walk</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500">Pemodelan batas jangkauan tempuh pejalan kaki dan kendaraan.</p>
+                                <input type="range" class="w-full accent-emerald-600" value="70">
+                            </div>
+
+                            <!-- Param 2: Population -->
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-800 flex items-center">
+                                        <i data-lucide="users" class="w-3.5 h-3.5 text-blue-700 mr-1.5"></i> 2. Population Density
+                                    </span>
+                                    <span class="text-[10px] font-mono text-slate-500">BPS / PDRB</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500">Integrasi data demografi resmi pemerintah per desa/kelurahan.</p>
+                                <input type="range" class="w-full accent-blue-600" value="85">
+                            </div>
+
+                            <!-- Param 3: Competitor Heatmap -->
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-800 flex items-center">
+                                        <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-700 mr-1.5"></i> 3. Competitor Heatmap
+                                    </span>
+                                    <span class="text-[10px] font-mono text-slate-500">>2.7M POI</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500">Deteksi kepadatan kompetitor dan penetapan polaritas (+/-).</p>
+                                <input type="range" class="w-full accent-rose-600" value="40">
+                            </div>
+
+                            <!-- Param 4: SES / SCS Scoring -->
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-800 flex items-center">
+                                        <i data-lucide="trending-up" class="w-3.5 h-3.5 text-purple-700 mr-1.5"></i> 4. Profil SES / SCS
+                                    </span>
+                                    <span class="text-[10px] font-mono text-slate-500">Buying Power</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500">Analisis profil sosio-ekonomi dan tingkat permintaan pasar emas/gadai.</p>
+                                <input type="range" class="w-full accent-purple-600" value="90">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Bottom Config Row -->
+                    <div class="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                        <div class="flex items-center space-x-3">
+                            <label class="flex items-center space-x-1.5 text-[11px]">
+                                <input type="checkbox" checked class="rounded text-emerald-600">
+                                <span>Pisahkan Analisis Syariah vs Konvensional</span>
+                            </label>
+                        </div>
+                        <button class="px-4 py-2 bg-[#005E38] hover:bg-emerald-800 text-white font-medium rounded-lg shadow transition">
+                            Simpan Parameter Preset
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SPATIAL MAP PREVIEW AREA -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Hasil Pemetaan Heatmap MCDA Potensi Wilayah</h3>
+                    <span class="text-xs text-slate-500 font-mono">Status: Bulk Spatial Analysis Active</span>
+                </div>
+                <div class="h-64 map-bg rounded-xl border border-slate-200 relative flex items-center justify-center overflow-hidden">
+                    <div class="text-center text-slate-500 space-y-1">
+                        <i data-lucide="sparkles" class="w-8 h-8 text-purple-600 mx-auto animate-pulse"></i>
+                        <p class="font-bold text-xs text-slate-800">MCDA Spatial Overlay Active</p>
+                        <p class="text-[11px]">Layer Demografi (BPS), POI (>2.7M), dan Heatmap Kompetitor Tergabung</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+<main id="page-profile" class="flex-1 flex flex-col overflow-hidden page-view" style="display:none;">
+
+        <!-- TOP BAR HEADER -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Profil & Pengaturan Akun</h2>
+                <p class="text-xs text-slate-500">Kelola informasi pengguna, hak akses peran wilayah, dan opsi keamanan akun.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="bg-[#005E38] hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center shadow transition">
+                    <i data-lucide="save" class="w-4 h-4 mr-1.5"></i> Simpan Perubahan
+                </button>
+            </div>
+        </header>
+
+        <!-- PROFILE BODY CONTENT -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- USER CARD BANNER -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center space-x-5">
+                    <div class="relative">
+                        <div class="w-20 h-20 rounded-2xl bg-[#005E38] text-white font-bold text-2xl flex items-center justify-center shadow-lg">
+                            VP
+                        </div>
+                        <button class="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-200 shadow hover:bg-slate-50 text-slate-600">
+                            <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-lg font-bold text-slate-900">Admin Kantor Wilayah VIII</h3>
+                            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Active Role</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Divisi Operasional & Jaringan — PT Pegadaian (Persero)</p>
+                        <p class="text-[11px] text-slate-400 font-mono">ID Pengguna: PGD-EMP-202688</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap md:flex-nowrap gap-3 text-xs">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center min-w-[120px]">
+                        <span class="text-[10px] text-slate-400 font-medium block">Cakupan Wilayah</span>
+                        <span class="font-bold text-slate-800">Kanwil VIII (Jakarta 1)</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center min-w-[120px]">
+                        <span class="text-[10px] text-slate-400 font-medium block">Level Akses</span>
+                        <span class="font-bold text-emerald-700">Regional Approver</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFILE SETTINGS TABS & FORM -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- LEFT FORM: PERSONAL & REGIONAL INFO -->
+                <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-5">
+                    <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3">Informasi Akun & Detail Jabatan</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap Pengguna</label>
+                            <input type="text" value="Muftia Oktavialih" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none font-medium text-slate-800">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Email Kedinasan</label>
+                            <input type="email" value="kanwil.jkt1@pegadaian.co.id" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none font-medium text-slate-800">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Nomor Telepon / WhatsApp Operasional</label>
+                            <input type="text" value="+62 812-9876-5432" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-800">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Kantor Wilayah Penugasan (Kanwil)</label>
+                            <select class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg outline-none font-medium text-slate-700 cursor-not-allowed" disabled>
+                                <option selected>Kanwil VIII - Jakarta 1 (Locked)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECURITY & PASSWORD SECTION -->
+                    <div class="pt-4 border-t border-slate-100 space-y-4">
+                        <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Ubah Kata Sandi (Keamanan)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kata Sandi Saat Ini</label>
+                                <input type="password" placeholder="••••••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kata Sandi Baru</label>
+                                <input type="password" placeholder="Masukkan kata sandi baru..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDE: ACCESS PERMISSIONS & RECENT AUDIT -->
+                <div class="space-y-6">
+                    
+                    <!-- Permissions Card -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Matriks Otoritas Access (RBAC)</h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="text-slate-700">Review Pengajuan Outlet</span>
+                                <span class="text-emerald-700 font-bold">✓ Allowed</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="text-slate-700">Approval Stage 1 Kanwil</span>
+                                <span class="text-emerald-700 font-bold">✓ Allowed</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="text-slate-700">Ekspor Laporan Master Data</span>
+                                <span class="text-emerald-700 font-bold">✓ Allowed</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="text-slate-700">Konfigurasi System Admin</span>
+                                <span class="text-slate-400 font-bold">✕ Restricted</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Session Card -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 text-xs">
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Sesi Log Masuk Aktif</h3>
+                        <div class="space-y-1.5 text-slate-600">
+                            <p><span class="text-slate-400">IP Address:</span> <span class="font-mono">10.240.12.88 (Pegadaian VPC)</span></p>
+                            <p><span class="text-slate-400">Browser:</span> Chrome on macOS</p>
+                            <p><span class="text-slate-400">Sesi Berakhir:</span> Dalam 8 Jam</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+<div id="dash_newSubmissionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-all duration-200">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+            
+            
+            <div class="bg-[#005E38] text-white px-6 py-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/30 border border-emerald-400/30 flex items-center justify-center">
+                        <i data-lucide="file-plus" class="w-4 h-4 text-emerald-200"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Form Pengajuan Perubahan Data Outlet</h3>
+                        <p class="text-xs text-emerald-200/90">Lengkapi detail pengajuan baru untuk diteruskan ke proses approval berjenjang</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('dash_newSubmissionModal')" class="text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-emerald-800/50 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            
+            <div class="p-6 overflow-y-auto space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">Jenis Perubahan Outlet <span class="text-rose-500">*</span></label>
+                    <select class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none font-medium text-slate-800 focus:ring-1 focus:ring-emerald-600 focus:bg-white transition">
+                        <option value="RELOCATION" selected>Relokasi Outlet (Pindah Alamat)</option>
+                        <option value="NEW">Buka Baru (New Outlet)</option>
+                        <option value="ADDRESS">Perubahan Alamat / Koreksi GPS</option>
+                        <option value="NAME">Perubahan Nama Outlet</option>
+                        <option value="CLOSURE">Tutup Outlet (Penutupan Operasional)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Kantor Wilayah (Kanwil) <span class="text-rose-500">*</span></label>
+                        <select class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-800">
+                            <option value="kw8" selected>Kanwil VIII - Jakarta 1</option>
+                            <option value="kw9">Kanwil IX - Jakarta 2</option>
+                            <option value="kw10">Kanwil X - Bandung</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Pilih Target Outlet / Unit <span class="text-rose-500">*</span></label>
+                        <input type="text" value="Unit CP Kramat Raya (PGD-JKT-042)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none font-medium text-slate-800 focus:bg-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Alamat Usulan Baru Lengkap <span class="text-rose-500">*</span></label>
+                    <textarea rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-800 focus:bg-white" placeholder="Jl. Nama Jalan No, RT/RW, Kelurahan, Kecamatan, Kota/Kabupaten..."></textarea>
+                </div>
+
+                <div class="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200 space-y-2">
+                    <span class="font-bold text-emerald-900 flex items-center text-xs">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 mr-1.5 text-emerald-700"></i> Geotagging Validasi Spasial GEO MAPID
+                    </span>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-600 font-medium mb-0.5">Latitude (Lintang)</label>
+                            <input type="text" value="-6.18234" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-mono text-slate-800 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-600 font-medium mb-0.5">Longitude (Bujur)</label>
+                            <input type="text" value="106.83211" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-mono text-slate-800 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Unggah Foto Lokasi & Berita Acara Survei</label>
+                    <div class="border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-xl p-4 text-center bg-slate-50/80 transition cursor-pointer">
+                        <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto mb-1 text-slate-400"></i>
+                        <p class="font-medium text-slate-700">Klik atau seret foto gedung lokasi baru ke sini</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Format JPG, PNG, atau PDF (Maks. 10MB per file)</p>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
+                <button onclick="closeModal('dash_newSubmissionModal')" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-100 transition">
+                    Batal
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="closeModal('dash_newSubmissionModal')" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition">
+                        Simpan Draft
+                    </button>
+                    <button onclick="closeModal('dash_newSubmissionModal')" class="px-4 py-2 bg-[#005E38] hover:bg-emerald-800 text-white font-semibold rounded-lg shadow-md transition flex items-center">
+                        <i data-lucide="send" class="w-3.5 h-3.5 mr-1.5"></i> Kirim Pengajuan
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    
+    <div id="dash_exportDataModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-all duration-200">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col">
+            
+            <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-slate-700 border border-slate-600 flex items-center justify-center">
+                        <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Ekspor Data & Laporan GIS</h3>
+                        <p class="text-xs text-slate-300">Pilih format unduhan, filter wilayah, dan cakupan kolom laporan</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('dash_exportDataModal')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1.5">Format Berkas Unduhan <span class="text-rose-500">*</span></label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <label class="flex items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-emerald-600 transition">
+                            <input type="radio" name="exportFormat" checked class="text-emerald-600 mr-2">
+                            <div>
+                                <p class="font-bold text-slate-800">Microsoft Excel (.xlsx)</p>
+                                <p class="text-[10px] text-slate-400">Laporan tabular lengkap</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-emerald-600 transition">
+                            <input type="radio" name="exportFormat" class="text-emerald-600 mr-2">
+                            <div>
+                                <p class="font-bold text-slate-800">CSV Dataset (.csv)</p>
+                                <p class="text-[10px] text-slate-400">Raw data kompatibel SAP</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-emerald-600 transition">
+                            <input type="radio" name="exportFormat" class="text-emerald-600 mr-2">
+                            <div>
+                                <p class="font-bold text-slate-800">GeoJSON Spasial (.geojson)</p>
+                                <p class="text-[10px] text-slate-400">Layer koordinat GIS MAPID</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-emerald-600 transition">
+                            <input type="radio" name="exportFormat" class="text-emerald-600 mr-2">
+                            <div>
+                                <p class="font-bold text-slate-800">Executive PDF (.pdf)</p>
+                                <p class="text-[10px] text-slate-400">Ringkasan direksi terformat</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Cakupan Wilayah Data</label>
+                    <select class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none font-medium text-slate-800">
+                        <option value="ALL">Seluruh Indonesia (12 Kanwil - All Column)</option>
+                        <option value="KW8" selected>Kanwil VIII - Jakarta 1 Only</option>
+                        <option value="KW9">Kanwil IX - Jakarta 2 Only</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tanggal Mulai</label>
+                        <input type="date" value="2026-01-01" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tanggal Akhir</label>
+                        <input type="date" value="2026-08-11" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Sertakan Field Tambahan</label>
+                    <div class="space-y-1.5 pt-0.5">
+                        <label class="flex items-center space-x-2 text-[11px]">
+                            <input type="checkbox" checked class="rounded text-emerald-600">
+                            <span>Sertakan Log Audit & Histori Approval</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-[11px]">
+                            <input type="checkbox" checked class="rounded text-emerald-600">
+                            <span>Sertakan Skor Akurasi & Metode Validasi Spasial</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
+                <button onclick="closeModal('dash_exportDataModal')" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-100 transition">
+                    Batal
+                </button>
+                <button onclick="closeModal('dash_exportDataModal')" class="px-5 py-2 bg-[#005E38] hover:bg-emerald-800 text-white font-semibold rounded-lg shadow-md transition flex items-center">
+                    <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i> Generate & Unduh Berkas
+                </button>
+            </div>
+
+        </div>
+    </div>
+<div id="peng_detailModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            
+            <div class="bg-emerald-900 text-white px-6 py-4 flex items-center justify-between">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-emerald-700 text-emerald-100 text-[10px] font-semibold px-2 py-0.5 rounded">MO-2026-00125</span>
+                        <h3 class="text-base font-bold">Detail Pengajuan Relokasi Outlet</h3>
+                    </div>
+                    <p class="text-xs text-emerald-200 mt-0.5">Unit CP Kramat Raya — Kanwil VIII Jakarta 1</p>
+                </div>
+                <button onclick="closeModal('peng_detailModal')" class="text-emerald-200 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            
+            <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+
+                
+                <div>
+                    <h4 class="font-bold text-slate-800 text-xs mb-3 uppercase tracking-wider text-emerald-800">Perbandingan Data Lokasi</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Lokasi Eksisting (Lama)</span>
+                            <p class="font-semibold text-slate-800">Jl. Kramat Raya No. 45, Senen, Jakarta Pusat</p>
+                            <p class="text-[11px] text-slate-500">Koordinat: -6.18110, 106.83150</p>
+                            <span class="inline-block text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded">Sewa Berakhir: 30 Sep 2026</span>
+                        </div>
+
+                        
+                        <div class="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200 space-y-2">
+                            <span class="text-[10px] font-bold text-emerald-700 uppercase">Usulan Lokasi Baru (Geotagged)</span>
+                            <p class="font-semibold text-slate-900">Jl. Kramat Raya No. 12, Senen, Jakarta Pusat</p>
+                            <p class="text-[11px] text-slate-600">Koordinat: -6.18234, 106.83211</p>
+                            <span class="inline-block text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Tervalidasi Ground Check</span>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div>
+                    <h4 class="font-bold text-slate-800 text-xs mb-3 uppercase tracking-wider text-emerald-800">Riwayat Persetujuan (Audit Log)</h4>
+                    <div class="space-y-3 relative pl-4 border-l-2 border-slate-200">
+                        <div class="relative">
+                            <div class="w-2.5 h-2.5 bg-emerald-600 rounded-full absolute -left-[21px] top-1"></div>
+                            <p class="font-semibold text-slate-800">Pengajuan Dibuat oleh Kepala Cabang</p>
+                            <p class="text-[10px] text-slate-400">10 Agustus 2026 • 09:15 WIB — Pemohon: Budi Santoso</p>
+                            <p class="text-[11px] text-slate-600 mt-1 bg-slate-50 p-2 rounded">"Pengajuan relokasi dikarenakan masa sewa gedung lama berakhir dan lokasi baru lebih dekat dengan pusat bisnis."</p>
+                        </div>
+                        <div class="relative">
+                            <div class="w-2.5 h-2.5 bg-amber-500 rounded-full absolute -left-[21px] top-1"></div>
+                            <p class="font-semibold text-amber-800">Menunggu Review Pemimpin Wilayah (Kanwil)</p>
+                            <p class="text-[10px] text-slate-400">10 Agustus 2026 • 11:30 WIB — Pending Approver: VP Kanwil VIII</p>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <label class="block font-bold text-slate-800 text-xs">Catatan Review / Keputusan</label>
+                    <textarea rows="2" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500" placeholder="Masukkan alasan persetujuan, penolakan, atau catatan revisi..."></textarea>
+                </div>
+
+            </div>
+
+            
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+                <button onclick="closeModal('peng_detailModal')" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-100">Batal</button>
+                <div class="flex items-center space-x-2">
+                    <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow">Minta Revisi</button>
+                    <button class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg shadow">Tolak</button>
+                    <button class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow">Setujui Pengajuan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="peng_newSubmissionModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden">
+            <div class="bg-emerald-900 text-white px-6 py-4 flex items-center justify-between">
+                <h3 class="text-base font-bold">Form Pengajuan Perubahan Data Outlet</h3>
+                <button onclick="closeModal('peng_newSubmissionModal')" class="text-emerald-200 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Jenis Perubahan *</label>
+                    <select class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                        <option value="NEW">Buka Baru (New Outlet)</option>
+                        <option value="RELOCATION">Relokasi Outlet</option>
+                        <option value="ADDRESS">Perubahan Alamat</option>
+                        <option value="NAME">Perubahan Nama</option>
+                        <option value="CLOSURE">Tutup Outlet</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Pilih Outlet Exsiting (Jika Relokasi/Ubah Alamat)</label>
+                    <input type="text" placeholder="Ketik Kode atau Nama Outlet..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1">Koordinat Latitude</label>
+                        <input type="text" placeholder="-6.18234" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Koordinat Longitude</label>
+                        <input type="text" placeholder="106.83211" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Alamat Lengkap Usulan</label>
+                    <textarea rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none" placeholder="Jl. Nama Jalan, No, RT/RW, Kelurahan, Kecamatan..."></textarea>
+                </div>
+            </div>
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end space-x-2">
+                <button onclick="closeModal('peng_newSubmissionModal')" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-lg">Batal</button>
+                <button onclick="closeModal('peng_newSubmissionModal')" class="px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg shadow">Kirim Pengajuan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPage(key) {
+            document.querySelectorAll('.page-view').forEach(function(el) {
+                el.classList.remove('active');
+                el.style.display = 'none';
+            });
+            var target = document.getElementById('page-' + key);
+            if (target) {
+                target.classList.add('active');
+                target.style.display = 'flex';
+            }
+
+            document.querySelectorAll('.nav-link').forEach(function(el) {
+                if (el.dataset.page === key) {
+                    el.classList.add('bg-emerald-800', 'text-white', 'shadow-inner');
+                    el.classList.remove('text-emerald-100', 'hover:bg-emerald-800/60');
+                } else {
+                    el.classList.remove('bg-emerald-800', 'text-white', 'shadow-inner');
+                    el.classList.add('text-emerald-100', 'hover:bg-emerald-800/60');
+                }
+            });
+
+            var scrollArea = target ? target.querySelector('.overflow-y-auto') : null;
+            if (scrollArea) scrollArea.scrollTop = 0;
+        }
+
+        function openModal(id) {
+            var modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeModal(id) {
+            var modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
